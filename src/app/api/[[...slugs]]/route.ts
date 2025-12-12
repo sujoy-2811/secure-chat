@@ -9,7 +9,15 @@ import { useRealtime } from "@/lib/realtime-client";
 
 const ROOM_TTL_SECONDS = 60 * 10;
 const room = new Elysia({ prefix: "/room" })
-  .use(cors())
+  .use(
+    cors({
+      origin: [
+        "http://localhost:3000",
+        "https://secure-chat-murex.vercel.app/",
+        "https://chat.sujoymanna.in",
+      ],
+    })
+  )
   .post("/create", async () => {
     const roomId = nanoid();
 

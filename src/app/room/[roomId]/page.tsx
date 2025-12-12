@@ -5,14 +5,13 @@ import { client } from "@/lib/client";
 import { useRealtime } from "@/lib/realtime-client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { useParams } from "next/navigation";
-import { useRef, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 function formatTimeRemaining(seconds: number) {
   const mins = Math.floor(seconds / 60);
   const sec = seconds % 60;
 
-  // TODO : improvement is possible
   return `${mins}:${
     sec.toString().length < 2 ? 0 + sec.toString() : sec.toString()
   }`;
@@ -23,8 +22,48 @@ const Page = () => {
   const roomId = param.roomId as string;
   const { username } = useUsername();
 
+  const router = useRouter();
+
   const [copyStatus, setCopyStatus] = useState("Copy");
-  const [timeRaining, setTimeRemaining] = useState<number | null>(68);
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+
+  const { data: ttlData } = useQuery({
+    queryKey: ["ttl", roomId],
+    queryFn: async () => {
+      const res = await client.room.ttl.get({ query: { roomId } });
+      return res.data;
+    },
+  });
+
+  useEffect(() => {
+    if (ttlData?.ttl !== undefined) {
+      setTimeRemaining(ttlData.ttl);
+    }
+  }, [ttlData]);
+
+  useEffect(() => {
+    if (timeRemaining == null || timeRemaining < 0) return;
+
+    if (timeRemaining == 0) {
+      router.push("/?destroyed=true");
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev == null || prev == null) {
+          clearInterval(interval);
+          return 0;
+        }
+
+        return prev - 1;
+      });
+    }, 1000);
+
+    // return () => clearInterval(interval);
+  }, [timeRemaining, router]);
+
+  console.log(timeRemaining);
 
   const { data: messages, refetch } = useQuery({
     queryKey: ["messages", roomId],
@@ -51,6 +90,15 @@ const Page = () => {
       if (event === "chat.message") {
         refetch();
       }
+      if (event === "chat.destroy") {
+        router.push("/?destroyed=true");
+      }
+    },
+  });
+
+  const { mutate: destroyRoom } = useMutation({
+    mutationFn: async () => {
+      await client.room.delete(null, { query: { roomId } });
     },
   });
 
@@ -87,21 +135,25 @@ const Page = () => {
           <div className="h-8 w-px bg-zinc-800" />
           <div className="flex flex-col">
             <span className="text-sm text-zinc-500 uppercase">
-              {" "}
               Self-Destruct
             </span>
             <span
               className={`text-sm font-bold flex items-center gap-2 ${
-                timeRaining != null && timeRaining < 60
+                timeRemaining != null && timeRemaining < 60
                   ? "text-red-500"
                   : "text-green-500"
               } `}
             >
-              {timeRaining != null ? formatTimeRemaining(timeRaining) : "--:--"}
+              {timeRemaining != null
+                ? formatTimeRemaining(timeRemaining)
+                : "--:--"}
             </span>
           </div>
         </div>
-        <button className="text-sm bg-zinc-800 hover:bg-red-600 px-3 py-1.5 rounded  text-zinc-400 hover:text-white font-bold transition-all group flex items-center gap-2 disabled:opacity-50 uppercase">
+        <button
+          onClick={() => destroyRoom()}
+          className="text-sm bg-zinc-800 hover:bg-red-600 px-3 py-1.5 rounded  text-zinc-400 hover:text-white font-bold transition-all group flex items-center gap-2 disabled:opacity-50 uppercase"
+        >
           Destroy Now
         </button>
       </header>

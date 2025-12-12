@@ -3,24 +3,46 @@ import { authMiddleware } from "./auth";
 import { Elysia, t } from "elysia";
 import { nanoid } from "nanoid";
 import z from "zod";
-import { Bodoni_Moda } from "next/font/google";
 import { Message, realtime } from "@/lib/realtime";
+import { useRealtime } from "@/lib/realtime-client";
 
 const ROOM_TTL_SECONDS = 60 * 10;
-const room = new Elysia({ prefix: "/room" }).post("/create", async () => {
-  const roomId = nanoid();
+const room = new Elysia({ prefix: "/room" })
+  .post("/create", async () => {
+    const roomId = nanoid();
 
-  await redis.hset(`meta:${roomId}`, {
-    connected: [],
-    createdAt: Date.now(),
-  });
+    await redis.hset(`meta:${roomId}`, {
+      connected: [],
+      createdAt: Date.now(),
+    });
 
-  await redis.expire(`meta:${roomId}`, ROOM_TTL_SECONDS);
+    await redis.expire(`meta:${roomId}`, ROOM_TTL_SECONDS);
 
-  console.log("new room is created with id ", roomId);
+    console.log("new room is created with id ", roomId);
 
-  return { roomId };
-});
+    return { roomId };
+  })
+  .use(authMiddleware)
+  .get(
+    "/ttl",
+    async ({ auth }) => {
+      const ttl = await redis.ttl(`meta:${auth.roomId}`);
+      return { ttl: ttl > 0 ? ttl : 0 };
+    },
+    { query: z.object({ roomId: z.string() }) }
+  )
+  .delete(
+    "/",
+    async ({ auth }) => {
+      await Promise.all([
+        redis.del(auth.roomId),
+        redis.del(`meta:${auth.roomId}`),
+        redis.del(`messages:${auth.roomId}`),
+      ]);
+    },
+    // await useRealtime
+    { query: z.object({ roomId: z.string() }) }
+  );
 
 const messages = new Elysia({ prefix: "/messages" })
   .use(authMiddleware)
@@ -80,6 +102,7 @@ const messages = new Elysia({ prefix: "/messages" })
           token: m.token === auth.token ? auth.token : undefined,
         })),
       };
+      realtime.channel(auth.roomId).emit("chat.destroy", { isDestroyed: true });
     },
     { query: z.object({ roomId: z.string() }) }
   );
@@ -87,5 +110,6 @@ const app = new Elysia({ prefix: "/api" }).use(room).use(messages);
 
 export const GET = app.fetch;
 export const POST = app.fetch;
+export const DELETE = app.fetch;
 
 export type App = typeof app;

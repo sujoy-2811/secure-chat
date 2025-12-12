@@ -34,6 +34,10 @@ const room = new Elysia({ prefix: "/room" })
   .delete(
     "/",
     async ({ auth }) => {
+      await realtime
+        .channel(auth.roomId)
+        .emit("chat.destroy", { isDestroyed: true });
+
       await Promise.all([
         redis.del(auth.roomId),
         redis.del(`meta:${auth.roomId}`),

@@ -51,7 +51,7 @@ const Page = () => {
 
     const interval = setInterval(() => {
       setTimeRemaining((prev) => {
-        if (prev == null || prev == null) {
+        if (prev == null || prev < 1) {
           clearInterval(interval);
           return 0;
         }
@@ -60,10 +60,8 @@ const Page = () => {
       });
     }, 1000);
 
-    // return () => clearInterval(interval);
+    return () => clearInterval(interval);
   }, [timeRemaining, router]);
-
-  console.log(timeRemaining);
 
   const { data: messages, refetch } = useQuery({
     queryKey: ["messages", roomId],
@@ -218,6 +216,7 @@ const Page = () => {
           <button
             onClick={() => {
               seendMessage({ text: input });
+              setInput("");
               inputRef.current?.focus();
             }}
             disabled={!input.trim() || isPending}

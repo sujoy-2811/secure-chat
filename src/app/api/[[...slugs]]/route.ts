@@ -1,18 +1,17 @@
 import { redis } from "@/lib/redis";
 import { authMiddleware } from "./auth";
-import { Elysia, t } from "elysia";
+import { Elysia } from "elysia";
 import { cors } from "@elysiajs/cors";
 import { nanoid } from "nanoid";
 import z from "zod";
 import { Message, realtime } from "@/lib/realtime";
-import { useRealtime } from "@/lib/realtime-client";
 
 const ROOM_TTL_SECONDS = 60 * 10;
 const room = new Elysia({ prefix: "/room" })
   .use(
     cors({
       origin: [
-        "http://localhost:3000",
+        process.env.NEXT_PUBLIC_BACKEND_URL as string,
         "https://secure-chat-murex.vercel.app/",
         "https://chat.sujoymanna.in",
       ],

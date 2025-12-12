@@ -1,39 +1,15 @@
 "use client";
 
+import { useUsername } from "@/hooks/use-username";
 import { client } from "@/lib/client";
 import { useMutation } from "@tanstack/react-query";
 import { nanoid } from "nanoid";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, useEffect, useState } from "react";
 
-const USERNAME_STORAGE_KEY = "chat_username";
-const UUID_STORAGE_KEY = "chat_uuid";
-const UUID = nanoid(3);
-
 export default function Home() {
-  const [username, setUsername] = useState("");
-  const [uuid, setUuid] = useState("");
+  const { username } = useUsername();
   const router = useRouter();
-
-  function saveUsernameHandler(event: ChangeEvent<HTMLInputElement>): void {
-    setUsername(event.target.value);
-    localStorage.setItem(USERNAME_STORAGE_KEY, event.target.value);
-  }
-
-  useEffect(() => {
-    const stored_name = localStorage.getItem(USERNAME_STORAGE_KEY);
-    const stored_uuid = localStorage.getItem(UUID_STORAGE_KEY);
-
-    if (stored_name) {
-      setUsername(stored_name);
-    }
-    if (stored_uuid) {
-      setUuid(stored_uuid);
-    } else {
-      localStorage.setItem(UUID_STORAGE_KEY, UUID);
-      setUuid(UUID);
-    }
-  }, []);
 
   const { mutate: createRoom } = useMutation({
     mutationFn: async () => {
@@ -66,13 +42,9 @@ export default function Home() {
                 Your Identity
               </label>
               <div className="flex items-center gap-3">
-                <input
-                  value={username}
-                  onChange={saveUsernameHandler}
-                  id="username"
-                  className="flex-1 bg-zinc-950 border border-zinc-800 p-3 text-sm text-zinc-400 font-mono"
-                />
-                <span className="  pointer-none:">{uuid}</span>
+                <div className="flex-1 bg-zinc-950 border border-zinc-800 p-3 text-sm text-zinc-400 font-mono">
+                  {username}
+                </div>
               </div>
             </div>
             <button

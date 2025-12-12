@@ -5,9 +5,17 @@ import { client } from "@/lib/client";
 import { useMutation } from "@tanstack/react-query";
 import { nanoid } from "nanoid";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, Suspense, useEffect, useState } from "react";
 
-export default function Home() {
+const Page = () => {
+  return (
+    <Suspense>
+      <Home />
+    </Suspense>
+  );
+};
+
+function Home() {
   const { username } = useUsername();
   const router = useRouter();
 
@@ -88,3 +96,5 @@ export default function Home() {
     </main>
   );
 }
+
+export default Page;

@@ -1,6 +1,7 @@
 import { redis } from "@/lib/redis";
 import { authMiddleware } from "./auth";
 import { Elysia, t } from "elysia";
+import { cors } from "@elysiajs/cors";
 import { nanoid } from "nanoid";
 import z from "zod";
 import { Message, realtime } from "@/lib/realtime";
@@ -8,6 +9,7 @@ import { useRealtime } from "@/lib/realtime-client";
 
 const ROOM_TTL_SECONDS = 60 * 10;
 const room = new Elysia({ prefix: "/room" })
+  .use(cors())
   .post("/create", async () => {
     const roomId = nanoid();
 

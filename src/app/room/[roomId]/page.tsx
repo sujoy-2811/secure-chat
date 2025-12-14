@@ -124,9 +124,23 @@ const Page = () => {
               <span className="font-bold text-green-500 ">{roomId}</span>
               <button
                 onClick={copyLink}
-                className="text-[10px] bg-zinc-800 hover:bg-zinc-700 px-2 py-0.5 rounded text-zinc-400 hover:text-zinc-200 transition-colors"
+                className="relative group text-[10px] bg-zinc-800 hover:bg-zinc-700
+             px-2 py-0.5 rounded text-zinc-400 hover:text-zinc-200
+             transition-colors"
               >
                 {copyStatus}
+
+                {/* Tooltip */}
+                <span
+                  className="absolute left-1/2 top-1 translate-y-full -translate-x-1/2 mt-1
+               rounded-md bg-zinc-900 border border-zinc-700
+               px-2 py-1 text-xs font-medium text-zinc-200
+               opacity-0 group-hover:opacity-100
+               transition-opacity duration-200
+               pointer-events-none whitespace-nowrap shadow-lg"
+                >
+                  Share the link with a friend or open it in incognito.
+                </span>
               </button>
             </div>
           </div>

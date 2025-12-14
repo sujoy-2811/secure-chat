@@ -13,7 +13,7 @@ const room = new Elysia({ prefix: "/room" })
       origin: [
         process.env.NEXT_PUBLIC_BACKEND_URL as string,
         "https://secure-chat-murex.vercel.app/",
-        "https://chat.sujoymanna.in",
+        "https://chatroom.sujoymanna.in",
       ],
     })
   )

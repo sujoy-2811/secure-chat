@@ -115,7 +115,6 @@ const messages = new Elysia({ prefix: "/messages" })
           token: m.token === auth.token ? auth.token : undefined,
         })),
       };
-      realtime.channel(auth.roomId).emit("chat.destroy", { isDestroyed: true });
     },
     { query: z.object({ roomId: z.string() }) }
   );
